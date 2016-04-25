@@ -36,7 +36,7 @@ type TravelItiChaincode struct {
 var marbleIndexStr = "_marbleindex"				//name for the key/value that will store a list of all known marbles
 var openTradesStr = "_opentrades"				//name for the key/value that will store all open trades
 
-type Marble struct{
+type TravelIti struct{
 	Name string `json:"name"`					//the fieldtags are needed to keep case from bouncing around
 	Color string `json:"color"`
 	Size int `json:"size"`
@@ -191,7 +191,7 @@ func (t *TravelItiChaincode) Write(stub *shim.ChaincodeStub, args []string) ([]b
 }
 
 // ============================================================================================================================
-// Init Marble - create a new marble, store into chaincode state
+// Init TravelIti - create a new marble, store into chaincode state
 // ============================================================================================================================
 func (t *TravelItiChaincode) init_marble(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 	var err error
@@ -249,7 +249,7 @@ func (t *TravelItiChaincode) init_marble(stub *shim.ChaincodeStub, args []string
 }
 
 // ============================================================================================================================
-// Set User Permission on Marble
+// Set User Permission on TravelIti
 // ============================================================================================================================
 func (t *TravelItiChaincode) set_user(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 	var err error
@@ -266,7 +266,7 @@ func (t *TravelItiChaincode) set_user(stub *shim.ChaincodeStub, args []string) (
 	if err != nil {
 		return nil, errors.New("Failed to get thing")
 	}
-	res := Marble{}
+	res := TravelIti{}
 	json.Unmarshal(marbleAsBytes, &res)										//un stringify it aka JSON.parse()
 	res.User = args[1]														//change the user
 	
