@@ -33,10 +33,10 @@ import (
 type TravelItiChaincode struct {
 }
 
-var travelItiIndexStr = "_travelItiindex"				//name for the key/value that will store a list of all known travel itineraries
+var marbleIndexStr = "_marbleindex"				//name for the key/value that will store a list of all known marbles
 var openTradesStr = "_opentrades"				//name for the key/value that will store all open trades
 
-type TravelIti struct{
+type Marble struct{
 	Name string `json:"name"`					//the fieldtags are needed to keep case from bouncing around
 	Color string `json:"color"`
 	Size int `json:"size"`
@@ -53,24 +53,26 @@ func (t *TravelItiChaincode) init(stub *shim.ChaincodeStub, args []string) ([]by
 	if len(args) != 1 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 1")
 	}
+
 	// Initialize the chaincode
 	Aval, err = strconv.Atoi(args[0])
 	if err != nil {
 		return nil, errors.New("Expecting integer value for asset holding")
 	}
-	
+
 	// Write the state to the ledger
-	err = stub.PutState("abc", []byte(strconv.Itoa(Aval)))				//making a test var "abc", I find it handy to read/write to it right away to test the
-	network
+	err = stub.PutState("abc", []byte(strconv.Itoa(Aval)))				//making a test var "abc", I find it handy to read/write to it right away to test the network
 	if err != nil {
 		return nil, err
 	}
+	
 	var empty []string
 	jsonAsBytes, _ := json.Marshal(empty)								//marshal an emtpy array of strings to clear the index
-	err = stub.PutState(travelItiIndexStr, jsonAsBytes)
+	err = stub.PutState(marbleIndexStr, jsonAsBytes)
 	if err != nil {
 		return nil, err
 	}
+	
 	return nil, nil
 }
 
@@ -87,9 +89,9 @@ func (t *TravelItiChaincode) Run(stub *shim.ChaincodeStub, function string, args
 		return t.Delete(stub, args)
 	} else if function == "write" {											//writes a value to the chaincode state
 		return t.Write(stub, args)
-	} else if function == "init_travelIti" {									//create a new travelIti
-		return t.init_travelIti(stub, args)
-	} else if function == "set_user" {										//change owner of a travelIti
+	} else if function == "init_marble" {									//create a new marble
+		return t.init_marble(stub, args)
+	} else if function == "set_user" {										//change owner of a marble
 		return t.set_user(stub, args)
 	}
 	fmt.Println("run did not find func: " + function)						//error
@@ -111,29 +113,28 @@ func (t *TravelItiChaincode) Delete(stub *shim.ChaincodeStub, args []string) ([]
 		return nil, errors.New("Failed to delete state")
 	}
 
-	//srivatsav
-	//get the travelIti index
-	travelItiAsBytes, err := stub.GetState(travelItiIndexStr)
+	//get the marble index
+	marblesAsBytes, err := stub.GetState(marbleIndexStr)
 	if err != nil {
-		return nil, errors.New("Failed to get travelIti index")
+		return nil, errors.New("Failed to get marble index")
 	}
-	var travelItiIndex []string
-	json.Unmarshal(travelItiAsBytes, &travelItiIndex)								//un stringify it aka JSON.parse()
+	var marbleIndex []string
+	json.Unmarshal(marblesAsBytes, &marbleIndex)								//un stringify it aka JSON.parse()
 	
-	//remove travelIti from index
-	for i,val := range travelItiIndex{
+	//remove marble from index
+	for i,val := range marbleIndex{
 		fmt.Println(strconv.Itoa(i) + " - looking at " + val + " for " + name)
-		if val == name{															//find the correct travelIti
-			fmt.Println("found Travel Itinary")
-			travelItiIndex = append(travelItiIndex[:i], travelItiIndex[i+1:]...)			//remove it
-			for x:= range travelItiIndex{											//debug prints...
-				fmt.Println(string(x) + " - " + travelItiIndex[x])
+		if val == name{															//find the correct marble
+			fmt.Println("found marble")
+			marbleIndex = append(marbleIndex[:i], marbleIndex[i+1:]...)			//remove it
+			for x:= range marbleIndex{											//debug prints...
+				fmt.Println(string(x) + " - " + marbleIndex[x])
 			}
 			break
 		}
 	}
-	jsonAsBytes, _ := json.Marshal(travelItiIndex)									//save new index
-	err = stub.PutState(travelItiIndexStr, jsonAsBytes)
+	jsonAsBytes, _ := json.Marshal(marbleIndex)									//save new index
+	err = stub.PutState(marbleIndexStr, jsonAsBytes)
 	return nil, nil
 }
 
@@ -190,9 +191,9 @@ func (t *TravelItiChaincode) Write(stub *shim.ChaincodeStub, args []string) ([]b
 }
 
 // ============================================================================================================================
-// Init TravelIti - create a new Travel Itinerary, store into chaincode state
+// Init Marble - create a new marble, store into chaincode state
 // ============================================================================================================================
-func (t *TravelItiChaincode) init_travelIti(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+func (t *TravelItiChaincode) init_marble(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 	var err error
 
 	//   0       1       2     3
@@ -201,7 +202,7 @@ func (t *TravelItiChaincode) init_travelIti(stub *shim.ChaincodeStub, args []str
 		return nil, errors.New("Incorrect number of arguments. Expecting 4")
 	}
 
-	fmt.Println("- start init Travel Itinerary")
+	fmt.Println("- start init marble")
 	if len(args[0]) <= 0 {
 		return nil, errors.New("1st argument must be a non-empty string")
 	}
@@ -224,31 +225,31 @@ func (t *TravelItiChaincode) init_travelIti(stub *shim.ChaincodeStub, args []str
 	user := strings.ToLower(args[3])
 
 	str := `{"name": "` + args[0] + `", "color": "` + color + `", "size": ` + strconv.Itoa(size) + `, "user": "` + user + `"}`
-	err = stub.PutState(args[0], []byte(str))								//store travel Itinerary with id as key
+	err = stub.PutState(args[0], []byte(str))								//store marble with id as key
 	if err != nil {
 		return nil, err
 	}
 		
-	//get the Travel Itinerary index
-	travelItiAsBytes, err := stub.GetState(travelItiIndexStr)
+	//get the marble index
+	marblesAsBytes, err := stub.GetState(marbleIndexStr)
 	if err != nil {
-		return nil, errors.New("Failed to get travelIti index")
+		return nil, errors.New("Failed to get marble index")
 	}
-	var travelItiIndex []string
-	json.Unmarshal(travelItiAsBytes, &travelItiIndex)							//un stringify it aka JSON.parse()
+	var marbleIndex []string
+	json.Unmarshal(marblesAsBytes, &marbleIndex)							//un stringify it aka JSON.parse()
 	
 	//append
-	travelItiIndex = append(travelItiIndex, args[0])								//add travelIti name to index list
-	fmt.Println("! travelIti index: ", travelItiIndex)
-	jsonAsBytes, _ := json.Marshal(travelItiIndex)
-	err = stub.PutState(travelItiIndexStr, jsonAsBytes)						//store name of travelIti
+	marbleIndex = append(marbleIndex, args[0])								//add marble name to index list
+	fmt.Println("! marble index: ", marbleIndex)
+	jsonAsBytes, _ := json.Marshal(marbleIndex)
+	err = stub.PutState(marbleIndexStr, jsonAsBytes)						//store name of marble
 
-	fmt.Println("- end init travelIti")
+	fmt.Println("- end init marble")
 	return nil, nil
 }
 
 // ============================================================================================================================
-// Set User Permission on travelIti
+// Set User Permission on Marble
 // ============================================================================================================================
 func (t *TravelItiChaincode) set_user(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 	var err error
@@ -261,16 +262,16 @@ func (t *TravelItiChaincode) set_user(stub *shim.ChaincodeStub, args []string) (
 	
 	fmt.Println("- start set user")
 	fmt.Println(args[0] + " - " + args[1])
-	travelItiAsBytes, err := stub.GetState(args[0])
+	marbleAsBytes, err := stub.GetState(args[0])
 	if err != nil {
 		return nil, errors.New("Failed to get thing")
 	}
-	res := travelIti{}
-	json.Unmarshal(travelItiAsBytes, &res)										//un stringify it aka JSON.parse()
+	res := Marble{}
+	json.Unmarshal(marbleAsBytes, &res)										//un stringify it aka JSON.parse()
 	res.User = args[1]														//change the user
 	
 	jsonAsBytes, _ := json.Marshal(res)
-	err = stub.PutState(args[0], jsonAsBytes)								//rewrite the travelIti with id as key
+	err = stub.PutState(args[0], jsonAsBytes)								//rewrite the marble with id as key
 	if err != nil {
 		return nil, err
 	}
